@@ -15,3 +15,23 @@ model Task {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model PersonalTask {
+  id             Int       @id @default(autoincrement())
+  name           String
+  description    String?
+  startTime      DateTime?
+  endTime        DateTime?
+  source         String?
+  urgency        String    @default("中")
+  assignee       String?
+  collaborator   String?
+  status         String    @default("待处理")
+  notifyContent  String?
+  sendNotify     Boolean   @default(true)
+  extFields      String?
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
