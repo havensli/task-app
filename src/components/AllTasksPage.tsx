@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useTransition, useCallback } from 'react'
+import { useState, useTransition, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import PersonalTaskModal from './PersonalTaskModal'
 import {
   createPersonalTask, updatePersonalTask,
   deletePersonalTask, deletePersonalTasks,
-  getAllPersonalTasks,
+  getAllPersonalTasks, getAllMatchedPersonalTasks, bulkCreatePersonalTasks,
   type PersonalTaskFormData, type TaskFilters,
 } from '@/app/tasks/my/actions'
+import { exportTasksToExcel, parseExcelToTasks } from '@/lib/excel'
 import {
   FilterBar, TaskTableHead, TaskTableRow,
   STATUS_COLOR, URGENCY_COLOR,
@@ -82,6 +83,7 @@ export default function AllTasksPage({ initialItems, initialTotal, stats: initSt
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [isPending,  startTransition] = useTransition()
   const [filters,    setFilters]    = useState<TaskFilters & { startTime?: string; endTime?: string }>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const refreshTasks = useCallback(async (f?: typeof filters, p = page, ps = pageSize) => {
     const res = await getAllPersonalTasks(f ?? filters, p, ps)
@@ -111,6 +113,38 @@ export default function AllTasksPage({ initialItems, initialTotal, stats: initSt
   const handleBatchDelete = () => {
     if (!selectedIds.size || !confirm(`确定删除选中的 ${selectedIds.size} 条任务吗？`)) return
     startTransition(async () => { await deletePersonalTasks(Array.from(selectedIds)); await refreshTasks() })
+  }
+
+  const handleExport = () => {
+    startTransition(async () => {
+      try {
+        const allTasks = await getAllMatchedPersonalTasks(filters)
+        exportTasksToExcel(allTasks, '全部任务.xlsx')
+      } catch (err) {
+        alert('导出失败')
+      }
+    })
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = '' // reset
+
+    startTransition(async () => {
+      try {
+        const parsedData = await parseExcelToTasks(file)
+        if (parsedData.length === 0) {
+          alert('未解析到有效数据')
+          return
+        }
+        await bulkCreatePersonalTasks(parsedData)
+        alert(`成功导入 ${parsedData.length} 条任务`)
+        await refreshTasks()
+      } catch (err) {
+        alert('导入失败，请检查文件格式')
+      }
+    })
   }
 
   const allSelected   = tasks.length > 0 && selectedIds.size === tasks.length
@@ -181,11 +215,24 @@ export default function AllTasksPage({ initialItems, initialTotal, stats: initSt
         {/* Toolbar */}
         <div className="pt-toolbar">
           <div className="pt-toolbar-left">
-            <button id="btn-create-all" className="btn btn-primary" onClick={() => setModal({ open: true, mode: 'create' })}>
+            <button id="btn-create-all" className="btn btn-primary" onClick={() => setModal({ open: true, mode: 'create' })} disabled={isPending}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
               新增
+            </button>
+            <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              导入
+            </button>
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleImport} />
+            <button className="btn btn-secondary" onClick={handleExport} disabled={isPending}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              导出
             </button>
             <button id="btn-batch-delete-all" className="btn btn-danger-outline"
               onClick={handleBatchDelete} disabled={selectedIds.size === 0 || isPending}>

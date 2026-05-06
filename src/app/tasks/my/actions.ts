@@ -137,3 +137,40 @@ export async function deletePersonalTasks(ids: number[]) {
   revalidatePath('/tasks/my')
   revalidatePath('/tasks/all')
 }
+
+// Get all matched tasks for export (without pagination)
+export async function getAllMatchedPersonalTasks(filters?: TaskFilters) {
+  const where = buildWhere(filters)
+  return prisma.personalTask.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+// Bulk create for import
+export async function bulkCreatePersonalTasks(tasksData: PersonalTaskFormData[]) {
+  const dataToInsert = tasksData.map(data => ({
+    name:          data.name,
+    description:   data.description   || null,
+    startTime:     data.startTime     ? new Date(data.startTime)  : null,
+    endTime:       data.endTime       ? new Date(data.endTime)    : null,
+    source:        data.source        || null,
+    urgency:       data.urgency,
+    assignee:      data.assignee      || null,
+    collaborator:  data.collaborator  || null,
+    status:        data.status,
+    notifyContent: data.notifyContent || null,
+    sendNotify:    data.sendNotify,
+    extFields:     data.extFields     || null,
+    createdBy:     data.createdBy     || '批量导入',
+    updatedBy:     data.updatedBy     || '批量导入',
+  }))
+
+  await prisma.personalTask.createMany({
+    data: dataToInsert,
+    skipDuplicates: true, // Optional, depending on unique constraints
+  })
+  
+  revalidatePath('/tasks/my')
+  revalidatePath('/tasks/all')
+}
