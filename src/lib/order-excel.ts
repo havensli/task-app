@@ -67,6 +67,11 @@ const FIELD_ALIASES: Record<OrderFieldKey, string[]> = {
     '客户编码',
     '商家订单号',
     '原始单号',
+    '引用编码',
+    '参考编码',
+    'ref',
+    'refcode',
+    'referencecode',
     'sourceorder',
     'externalcode',
     'externalordercode',
@@ -82,7 +87,7 @@ const FIELD_ALIASES: Record<OrderFieldKey, string[]> = {
   weight: ['重量 (kg)', '重量(kg)', '重量', '货物重量', '计费重量', '包裹重量', 'kg', 'weight', 'weightkg'],
   quantity: ['件数', '包裹数量', '数量', '箱数', '件量', '包数', 'qty', 'quantity', 'packages', 'packagecount'],
   temperatureZone: ['温层', '运输温层', '货物温层', '温控类型', '温度类型', '温区', 'temperature', 'temperaturezone', 'tempzone'],
-  remark: ['备注', '附加说明', '说明', '客户备注', '订单备注', 'remark', 'memo', 'note', 'comments'],
+  remark: ['备注', '附加说明', '附言', '说明', '客户备注', '订单备注', 'remark', 'memo', 'note', 'comments'],
 }
 
 function normalizeHeader(value: unknown) {
@@ -227,44 +232,68 @@ export async function parseExcelData(
     throw new Error('Sheet 不存在：文件中未找到有效工作表')
   }
 
-  const sheetName = workbook.SheetNames.find(name => workbook.Sheets[name]?.['!ref']) ?? workbook.SheetNames[0]
-  const worksheet = workbook.Sheets[sheetName]
-  if (!worksheet?.['!ref']) {
-    throw new Error('Sheet 为空：未找到可导入的数据区域')
+  type CandidateSheet = {
+    sheetName: string
+    aoa: unknown[][]
+    headerRowIdx: number
+    bestScore: number
+    dataRows: unknown[][]
   }
 
-  const aoa: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    blankrows: false,
-    defval: '',
-    raw: false,
-  })
+  let bestCandidate: CandidateSheet | null = null
 
-  if (!aoa.length) {
-    throw new Error('文件为空：未找到表头和数据')
-  }
+  workbook.SheetNames.forEach(sheetName => {
+    const worksheet = workbook.Sheets[sheetName]
+    if (!worksheet?.['!ref']) return
 
-  let headerRowIdx = -1
-  let bestScore = 0
-  aoa.slice(0, 12).forEach((row, idx) => {
-    const cells = row.map(normalizeText).filter(Boolean)
-    const aliasScore = cells.reduce((sum, cell) => {
-      const max = Math.max(...SYSTEM_FIELDS.map(field => scoreHeaderForField(cell, field)), 0)
-      return sum + (max >= 70 ? 2 : max > 0 ? 1 : 0)
-    }, 0)
-    const score = aliasScore * 10 + cells.length
-    if (score > bestScore) {
-      bestScore = score
-      headerRowIdx = idx
+    const aoa: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
+      blankrows: false,
+      defval: '',
+      raw: false,
+    })
+
+    if (!aoa.length) return
+
+    let headerRowIdx = -1
+    let bestScore = 0
+    aoa.slice(0, 12).forEach((row, idx) => {
+      const cells = row.map(normalizeText).filter(Boolean)
+      const aliasScore = cells.reduce((sum, cell) => {
+        const max = Math.max(...SYSTEM_FIELDS.map(field => scoreHeaderForField(cell, field)), 0)
+        return sum + (max >= 70 ? 2 : max > 0 ? 1 : 0)
+      }, 0)
+      const score = aliasScore * 10 + cells.length
+      if (score > bestScore) {
+        bestScore = score
+        headerRowIdx = idx
+      }
+    })
+
+    const dataRows = headerRowIdx >= 0
+      ? aoa.slice(headerRowIdx + 1).filter(row => row.some(cell => !isEmpty(cell)))
+      : []
+
+    if (!bestCandidate || bestScore > bestCandidate.bestScore) {
+      bestCandidate = { sheetName, aoa, headerRowIdx, bestScore, dataRows }
     }
   })
 
+  if (!bestCandidate) {
+    throw new Error('Sheet 为空：未找到可导入的数据区域')
+  }
+
+  const candidate = bestCandidate as CandidateSheet
+  const sheetName = candidate.sheetName
+  const aoa = candidate.aoa
+  const headerRowIdx = candidate.headerRowIdx
+  const bestScore = candidate.bestScore
+  const dataRows: unknown[][] = candidate.dataRows
   if (headerRowIdx < 0 || bestScore < 8) {
     throw new Error('无法识别表头：请确认前 12 行内包含姓名、电话、地址、重量、件数、温层等列')
   }
 
   const headers = makeUniqueHeaders(aoa[headerRowIdx])
-  const dataRows = aoa.slice(headerRowIdx + 1).filter(row => row.some(cell => !isEmpty(cell)))
   if (!dataRows.length) {
     throw new Error('文件没有有效数据：表头下方未找到可导入行')
   }
