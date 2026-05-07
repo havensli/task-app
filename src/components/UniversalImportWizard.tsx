@@ -68,6 +68,7 @@ export default function UniversalImportWizard() {
   const [parseProgress, setParseProgress] = useState(DEFAULT_PROGRESS)
   const [submitProgress, setSubmitProgress] = useState(DEFAULT_PROGRESS)
   const [submitResult, setSubmitResult] = useState({ success: 0, fail: 0 })
+  const [submitErrors, setSubmitErrors] = useState<string[]>([])
   const [toast, setToast] = useState<Toast | null>(null)
 
   const totalPages = Math.max(1, Math.ceil(tableData.length / PAGE_SIZE))
@@ -217,6 +218,7 @@ export default function UniversalImportWizard() {
     }
 
     setStep('SUBMITTING')
+    setSubmitErrors([])
     setSubmitProgress({ percent: 0, current: 0, total: tableData.length, message: '准备提交' })
 
     const orders = rowsToOrderFormData(tableData)
@@ -227,6 +229,19 @@ export default function UniversalImportWizard() {
     for (let i = 0; i < orders.length; i += CHUNK_SIZE) {
       const chunk = orders.slice(i, i + CHUNK_SIZE)
       const result = await bulkCreateOrders(chunk)
+      if (result.errors?.length) {
+        setSubmitErrors(result.errors)
+        setSubmitResult({ success, fail: fail + chunk.length })
+        setSubmitProgress({
+          percent: Math.round(((i + chunk.length) / orders.length) * 100),
+          current: Math.min(i + chunk.length, orders.length),
+          total: orders.length,
+          message: '唯一校验未通过',
+        })
+        setStep('RESULT')
+        showToast('error', result.errors[0])
+        return
+      }
       success += result.successCount
       fail += result.failCount
       const current = Math.min(i + chunk.length, orders.length)
@@ -255,6 +270,7 @@ export default function UniversalImportWizard() {
     setExistingExternalCodes([])
     setErrors({})
     setFlatErrors([])
+    setSubmitErrors([])
     setPage(1)
     setParseProgress(DEFAULT_PROGRESS)
     setSubmitProgress(DEFAULT_PROGRESS)
@@ -472,6 +488,14 @@ export default function UniversalImportWizard() {
           <div className="result-mark">完成</div>
           <h2>导入完成</h2>
           <p>成功 {submitResult.success} 条，失败 {submitResult.fail} 条</p>
+          {submitErrors.length > 0 && (
+            <div className="error-summary" style={{ marginTop: 18, textAlign: 'left' }}>
+              <div className="error-summary-title">唯一校验失败</div>
+              <div className="error-list">
+                {submitErrors.map(error => <span key={error}>{error}</span>)}
+              </div>
+            </div>
+          )}
           <div className="wizard-actions centered">
             <button className="btn btn-secondary" onClick={resetWizard}>继续导入</button>
             <button className="btn btn-primary" onClick={() => router.push('/orders')}>查看已导入运单</button>

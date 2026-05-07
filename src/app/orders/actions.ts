@@ -26,10 +26,19 @@ export type OrderFilters = {
   endTime?: string
 }
 
+function normalizeExternalCode(code: string | null | undefined) {
+  return code?.trim() || null
+}
+
 // Check existing external codes in the DB to avoid duplicates
 export async function checkExternalCodes(codes: string[]) {
+  const normalizedCodes = Array.from(
+    new Set(codes.map(code => normalizeExternalCode(code)).filter((code): code is string => Boolean(code))),
+  )
+  if (normalizedCodes.length === 0) return []
+
   const existing = await prisma.order.findMany({
-    where: { externalCode: { in: codes } },
+    where: { externalCode: { in: normalizedCodes } },
     select: { externalCode: true },
   })
   return existing.map(order => order.externalCode).filter((code): code is string => Boolean(code))
@@ -70,18 +79,39 @@ export async function saveTemplateMapping(hash: string, mappingRules: Record<str
 
 // Bulk create orders in chunks
 export async function bulkCreateOrders(orders: OrderFormData[]) {
+  const codes = orders.map(order => normalizeExternalCode(order.externalCode)).filter((code): code is string => Boolean(code))
+  const codeCounts = new Map<string, number>()
+  codes.forEach(code => {
+    codeCounts.set(code, (codeCounts.get(code) ?? 0) + 1)
+  })
+
+  const duplicateCodes = Array.from(codeCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([code]) => code)
+
+  const existingCodes = await checkExternalCodes(codes)
+  const errors = [
+    ...duplicateCodes.map(code => `外部编码 ${code} 在本次提交中重复`),
+    ...existingCodes.map(code => `外部编码 ${code} 已存在`),
+  ]
+
+  if (errors.length > 0) {
+    return { successCount: 0, failCount: orders.length, errors }
+  }
+
   // Prisma createMany has a limit, typically chunking is better. But createMany can handle thousands.
   // We'll trust createMany up to 5000, but let's chunk it by 500 just in case.
   const CHUNK_SIZE = 500
   let successCount = 0
   let failCount = 0
+  const errorsDuringCreate: string[] = []
   
   for (let i = 0; i < orders.length; i += CHUNK_SIZE) {
     const chunk = orders.slice(i, i + CHUNK_SIZE)
     try {
       const result = await prisma.order.createMany({
         data: chunk.map((o) => ({
-          externalCode: o.externalCode || null,
+          externalCode: normalizeExternalCode(o.externalCode),
           senderName: o.senderName,
           senderPhone: o.senderPhone,
           senderAddress: o.senderAddress,
@@ -93,18 +123,18 @@ export async function bulkCreateOrders(orders: OrderFormData[]) {
           temperatureZone: o.temperatureZone || '常温',
           remark: o.remark || null,
         })),
-        skipDuplicates: true, // If unique constraint fails, it skips. But we already validate in frontend.
       })
       successCount += result.count
       failCount += (chunk.length - result.count)
     } catch (error) {
       failCount += chunk.length
+      errorsDuringCreate.push('外部编码唯一校验未通过或数据库写入失败，请刷新后复查重复编码')
       console.error('Batch insert error', error)
     }
   }
 
   revalidatePath('/orders')
-  return { successCount, failCount }
+  return { successCount, failCount, errors: errorsDuringCreate }
 }
 
 // Get paginated orders list
