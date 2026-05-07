@@ -17,21 +17,46 @@ model Task {
 }
 
 model PersonalTask {
-  id             Int       @id @default(autoincrement())
-  name           String
-  description    String?
-  startTime      DateTime?
-  endTime        DateTime?
-  source         String?
-  urgency        String    @default("中")
-  assignee       String?
-  collaborator   String?
-  status         String    @default("待处理")
-  notifyContent  String?
-  sendNotify     Boolean   @default(true)
-  extFields      String?
-  createdBy      String?
-  updatedBy      String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            Int       @id @default(autoincrement())
+  name          String
+  description   String?
+  startTime     DateTime?
+  endTime       DateTime?
+  source        String?
+  urgency       String    @default("中")
+  assignee      String?
+  collaborator  String?
+  status        String    @default("待处理")
+  notifyContent String?
+  sendNotify    Boolean   @default(true)
+  extFields     String?
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  externalCode    String?  @unique
+  senderName      String
+  senderPhone     String
+  senderAddress   String
+  receiverName    String
+  receiverPhone   String
+  receiverAddress String
+  weight          Float
+  quantity        Int
+  temperatureZone String   @default("常温")
+  remark          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TemplateMapping {
+  id        Int      @id @default(autoincrement())
+  hash      String   @unique
+  mapping   String // JSON string storing the mapping
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

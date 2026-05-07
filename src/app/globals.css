@@ -1569,3 +1569,92 @@ input[type="datetime-local"].form-input {
   .detail-field-wide  { grid-column: span 2; }
   .all-stats-row { flex-wrap: wrap; }
 }
+
+/* ─────────────────────────────────────────
+ * Order Import Wizard & Inline Table
+ * ───────────────────────────────────────── */
+
+.wizard-container {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  margin: 0 auto;
+  max-width: 1000px;
+}
+
+.upload-box {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-box:hover {
+  border-color: var(--primary);
+  background: #f0fbfa;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.upload-box h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--foreground);
+  margin-bottom: 8px;
+}
+
+.upload-box p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.inline-edit-input {
+  width: 100%;
+  border: 1px solid transparent;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  font-size: 12.5px;
+  color: inherit;
+  transition: border 0.2s, background 0.2s;
+}
+
+.inline-edit-input:hover {
+  border-color: #ddd;
+  background: #fff;
+}
+
+.inline-edit-input:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+
+.inline-edit-input.input-error {
+  border-color: #e63946;
+  background: #fff0f1;
+}
+
+.cell-error-tooltip {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  background: #e63946;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.9;
+}
