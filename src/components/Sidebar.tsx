@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -116,8 +116,25 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(['任务管理']))
+  const [openMenus, setOpenMenus] = useState<Set<string>>(() => {
+    if (pathname.startsWith('/orders')) return new Set(['任务管理', '订单中心'])
+    return new Set(['任务管理'])
+  })
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const activeParent = navItems.find(item =>
+      item.children?.some(child => pathname === child.href || pathname.startsWith(`${child.href}/`))
+    )
+    if (!activeParent) return
+
+    setOpenMenus(prev => {
+      if (prev.has(activeParent.label)) return prev
+      const next = new Set(prev)
+      next.add(activeParent.label)
+      return next
+    })
+  }, [pathname])
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => {
@@ -216,7 +233,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <Link
                       key={child.href}
                       href={child.href}
-                      className={`nav-item ${pathname === child.href ? 'active' : ''}`}
+                      className={`nav-item ${pathname === child.href || pathname.startsWith(`${child.href}/`) ? 'active' : ''}`}
                     >
                       <span className="nav-item-label">{child.label}</span>
                     </Link>

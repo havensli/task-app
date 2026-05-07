@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import AdminShell from '@/components/AdminShell'
 import OrdersPage from '@/components/OrdersPage'
 import { getOrders } from './actions'
 
@@ -10,5 +11,9 @@ export const metadata = {
 export default async function OrderListPage() {
   const initialData = await getOrders()
   
-  return <OrdersPage initialItems={initialData.items} initialTotal={initialData.total} />
+  return (
+    <AdminShell>
+      <OrdersPage initialItems={initialData.items} initialTotal={initialData.total} />
+    </AdminShell>
+  )
 }
