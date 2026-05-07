@@ -300,9 +300,11 @@ export default function PersonalTaskPage({ initialItems, initialTotal }: Persona
   // Auto-open create modal when ?create=1 (from sidebar "新建任务" link)
   useEffect(() => {
     if (searchParams.get('create') === '1') {
-      setModal({ open: true, mode: 'create' })
-      // Clean URL without reloading
-      router.replace('/tasks/my', { scroll: false })
+      const timer = window.setTimeout(() => {
+        setModal({ open: true, mode: 'create' })
+        router.replace('/tasks/my', { scroll: false })
+      }, 0)
+      return () => window.clearTimeout(timer)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

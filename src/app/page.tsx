@@ -12,10 +12,11 @@ export default async function Home() {
   const total = tasks.length
   const completed = tasks.filter((t: { completed: boolean }) => t.completed).length
   const pending = total - completed
+  const overdueBefore = new Date()
+  overdueBefore.setDate(overdueBefore.getDate() - 7)
   const overdue = tasks.filter((t: { completed: boolean; createdAt: Date }) => {
     if (t.completed) return false
-    const daysDiff = (Date.now() - new Date(t.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-    return daysDiff > 7
+    return new Date(t.createdAt) < overdueBefore
   }).length
 
   return (

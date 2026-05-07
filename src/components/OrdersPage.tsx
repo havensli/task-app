@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useTransition, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getOrders, type OrderFilters } from '@/app/orders/actions'
+import type { Order } from '@/generated/prisma/client'
 
-export default function OrdersPage({ initialItems, initialTotal }: { initialItems: any[], initialTotal: number }) {
-  const router = useRouter()
+export default function OrdersPage({ initialItems, initialTotal }: { initialItems: Order[], initialTotal: number }) {
   const [orders, setOrders] = useState(initialItems)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)

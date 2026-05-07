@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
 import { toggleTask, deleteTask, createTask } from '@/app/actions'
 import { useRef } from 'react'
 
@@ -185,12 +185,8 @@ function formatDate(date: Date): string {
 export default function HomeDashboard({ tasks, stats }: HomeDashboardProps) {
   const [isPending, startTransition] = useTransition()
   const [showForm, setShowForm] = useState(false)
-  const [updateTime, setUpdateTime] = useState('')
+  const [updateTime] = useState(getUpdateTime)
   const formRef = useRef<HTMLFormElement>(null)
-
-  useEffect(() => {
-    setUpdateTime(getUpdateTime())
-  }, [])
 
   const pendingCards = getPendingCards(stats)
   const statusData = getStatusData(stats)

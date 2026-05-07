@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import type { DateTimeFilter, OrderWhereInput } from '@/generated/prisma/models'
 
 export type OrderFormData = {
   id?: number
@@ -31,7 +32,7 @@ export async function checkExternalCodes(codes: string[]) {
     where: { externalCode: { in: codes } },
     select: { externalCode: true },
   })
-  return existing.map((o: any) => o.externalCode)
+  return existing.map(order => order.externalCode).filter((code): code is string => Boolean(code))
 }
 
 // Fetch saved mapping by hash
@@ -43,6 +44,19 @@ export async function getTemplateMapping(hash: string) {
     return JSON.parse(mapping.mapping)
   }
   return null
+}
+
+export async function getAllTemplateMappings() {
+  const mappings = await prisma.templateMapping.findMany({
+    orderBy: { updatedAt: 'desc' },
+    take: 50,
+    select: { hash: true, mapping: true },
+  })
+
+  return mappings.map(item => ({
+    hash: item.hash,
+    mapping: JSON.parse(item.mapping) as Record<string, string>,
+  }))
 }
 
 // Save or update mapping
@@ -95,7 +109,8 @@ export async function bulkCreateOrders(orders: OrderFormData[]) {
 
 // Get paginated orders list
 export async function getOrders(filters?: OrderFilters, page = 1, pageSize = 10) {
-  const where: any = {}
+  const where: OrderWhereInput = {}
+  const createdAt: DateTimeFilter<'Order'> = {}
   
   if (filters?.externalCode) {
     where.externalCode = { contains: filters.externalCode, mode: 'insensitive' }
@@ -104,12 +119,15 @@ export async function getOrders(filters?: OrderFilters, page = 1, pageSize = 10)
     where.receiverName = { contains: filters.receiverName, mode: 'insensitive' }
   }
   if (filters?.startTime) {
-    where.createdAt = { ...where.createdAt, gte: new Date(filters.startTime) }
+    createdAt.gte = new Date(filters.startTime)
   }
   if (filters?.endTime) {
     const end = new Date(filters.endTime)
     end.setHours(23, 59, 59, 999)
-    where.createdAt = { ...where.createdAt, lte: end }
+    createdAt.lte = end
+  }
+  if (createdAt.gte || createdAt.lte) {
+    where.createdAt = createdAt
   }
 
   const [items, total] = await Promise.all([

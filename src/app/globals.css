@@ -1576,7 +1576,7 @@ input[type="datetime-local"].form-input {
 
 .wizard-container {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 32px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   border: 1px solid var(--border);
@@ -1584,9 +1584,43 @@ input[type="datetime-local"].form-input {
   max-width: 1000px;
 }
 
+.wizard-wide {
+  max-width: none;
+  padding: 24px;
+}
+
+.order-import-shell {
+  position: relative;
+}
+
+.wizard-section-title {
+  margin-bottom: 20px;
+}
+
+.wizard-section-title h2,
+.preview-toolbar h2,
+.result-panel h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.wizard-section-title p,
+.preview-toolbar p,
+.result-panel p {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.wizard-section-title.centered,
+.result-panel {
+  text-align: center;
+}
+
 .upload-box {
   border: 2px dashed var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 60px 20px;
   text-align: center;
   background: #fafafa;
@@ -1600,9 +1634,302 @@ input[type="datetime-local"].form-input {
 }
 
 .upload-icon {
-  font-size: 48px;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0;
+  border: 1px solid rgba(13, 158, 143, 0.2);
+}
+
+.mapping-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 24px minmax(220px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.mapping-header {
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f8fbfc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapping-arrow {
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.mapping-row select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: white;
+  color: var(--foreground);
+  outline: none;
+}
+
+.mapping-row select:focus {
+  border-color: var(--primary);
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.wizard-actions.centered {
+  justify-content: center;
+}
+
+.import-progress {
+  margin-top: 22px;
+}
+
+.progress-meta,
+.progress-count {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.progress-meta strong {
+  color: var(--primary-dark);
+}
+
+.progress-track {
+  height: 10px;
+  margin: 10px 0 8px;
+  border-radius: 999px;
+  background: #e8f0f3;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), #2563eb);
+  transition: width 0.2s ease;
+}
+
+.preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 16px;
-  opacity: 0.6;
+}
+
+.preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.error-summary {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff7f7;
+  color: #9f1239;
+}
+
+.error-summary.compact {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.error-summary-title {
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.error-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.error-list span {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #fee2e2;
+  font-size: 12px;
+}
+
+.excel-table-wrap {
+  width: 100%;
+  max-height: calc(100vh - 330px);
+  min-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+
+.excel-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.excel-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #f8fbfc;
+}
+
+.excel-table .row-number-cell {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 64px;
+  min-width: 64px;
+  text-align: center;
+  background: #f8fbfc;
+  color: var(--text-muted);
+}
+
+.excel-table tbody .row-number-cell {
+  z-index: 3;
+  background: #fbfdfe;
+}
+
+.excel-table .row-action-cell {
+  width: 78px;
+  min-width: 78px;
+  text-align: center;
+}
+
+.excel-table td {
+  vertical-align: top;
+  height: 54px;
+}
+
+.excel-table tr.row-has-error .row-number-cell {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+.required-star {
+  margin-left: 3px;
+  color: var(--danger);
+}
+
+.cell-has-error {
+  background: #fff7f7;
+}
+
+.cell-error-text {
+  margin-top: 3px;
+  color: #be123c;
+  font-size: 11px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.btn-icon.danger {
+  color: var(--danger);
+}
+
+.toast {
+  position: fixed;
+  right: 24px;
+  top: 70px;
+  z-index: 3000;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  font-size: 13px;
+}
+
+.toast-success {
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.toast-error {
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.toast-info {
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.result-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .wizard-container,
+  .wizard-wide {
+    padding: 18px;
+  }
+
+  .preview-toolbar,
+  .wizard-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .preview-actions {
+    justify-content: stretch;
+  }
+
+  .preview-actions .btn,
+  .wizard-actions .btn {
+    width: 100%;
+  }
+
+  .mapping-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mapping-arrow {
+    display: none;
+  }
 }
 
 .upload-box h3 {
